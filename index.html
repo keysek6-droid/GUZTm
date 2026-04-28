@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบออกเอกสารบัญชี - Professional Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb; /* FlowAccount Blue */
+            --secondary-color: #64748b;
+            --bg-color: #f1f5f9;
+            --paper-width: 210mm;
+            --paper-height: 297mm;
+            --accent-green: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #1e293b;
+        }
+
+        /* --- UI Controls Layout --- */
+        .no-print-area {
+            max-width: 1100px;
+            margin: 0 auto 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: #f8fafc;
+            font-family: 'Prompt', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--secondary-color);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input, textarea, select {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 14px;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            ring: 2px var(--primary-color);
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Prompt';
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add { background: var(--accent-green); color: white; }
+        .btn-print { background: var(--primary-color); color: white; }
+        .btn-reset { background: #f1f5f9; color: #ef4444; }
+
+        /* --- Paper Styles (A4 Preview) --- */
+        .paper-container {
+            display: flex;
+            justify-content: center;
+            padding-bottom: 50px;
+        }
+
+        .paper {
+            width: var(--paper-width);
+            min-height: var(--paper-height);
+            background: white;
+            padding: 20mm;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            font-family: 'Sarabun', sans-serif;
+            color: #000;
+        }
+
+        /* --- Document Header --- */
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            border-bottom: 4px solid var(--primary-color);
+            padding-bottom: 20px;
+        }
+
+        .company-logo-text {
+            font-family: 'Prompt';
+            font-weight: 700;
+            font-size: 28px;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .doc-title-box {
+            text-align: right;
+        }
+
+        .doc-title-box h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .doc-title-box p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .badge-copy {
+            display: inline-block;
+            border: 1px solid #cbd5e1;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .info-section {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            font-size: 15px;
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+
+        .info-box p { margin: 4px 0; font-size: 13.5px; line-height: 1.5; }
+
+        /* --- Table Style --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th {
+            background: #f8fafc;
+            border-bottom: 2px solid #334155;
+            padding: 12px 10px;
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        .col-right { text-align: right; }
+        .col-center { text-align: center; }
+
+        /* --- Summary Section --- */
+        .summary-container {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+
+        .paid-stamp {
+            border: 4px double #10b981;
+            color: #10b981;
+            display: inline-block;
+            padding: 10px 25px;
+            font-size: 32px;
+            font-weight: 900;
+            transform: rotate(-15deg);
+            opacity: 0.8;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-family: 'Prompt';
+        }
+
+        .summary-box {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            border-top: 2px solid var(--primary-color);
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary-color);
+        }
+
+        /* --- Signature Area --- */
+        .signature-grid {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+        }
+
+        .sig-box {
+            text-align: center;
+        }
+
+        .sig-line {
+            border-bottom: 1px solid #94a3b8;
+            margin-bottom: 10px;
+            height: 80px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .sig-line img { max-height: 70px; }
+
+        /* Signature Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 15px; text-align: center;
+        }
+        canvas { border: 1px dashed #cbd5e1; background: #fff; touch-action: none; }
+
+        /* --- Print Rules --- */
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print-area, .modal { display: none !important; }
+            .paper {
+                box-shadow: none; margin: 0; width: 100%; padding: 10mm;
+            }
+            @page { size: A4; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print-area">
+        <h2 style="margin-top:0;">Accounting System</h2>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchDoc('TAX')">1. ใบกำกับภาษี (Tax Invoice)</button>
+            <button class="tab-btn" onclick="switchDoc('RECEIPT')">2. ใบเสร็จรับเงิน (Receipt)</button>
+        </div>
+
+        <div class="form-grid">
+            <div class="input-group">
+                <label>ข้อมูลผู้ขาย (บริษัทของคุณ)</label>
+                <input type="text" id="sellerName" oninput="updatePreview()" placeholder="ชื่อบริษัท">
+                <textarea id="sellerAddr" oninput="updatePreview()" rows="3" placeholder="ที่อยู่"></textarea>
+                <input type="text" id="sellerTaxId" oninput="updatePreview()" placeholder="เลขประจำตัวผู้เสียภาษี (13 หลัก)">
+            </div>
+            <div class="input-group">
+                <label>ข้อมูลลูกค้า</label>
+                <input type="text" id="clientName" oninput="updatePreview()" placeholder="ชื่อลูกค้า/บริษัทลูกค้า">
+                <textarea id="clientAddr" oninput="updatePreview()" rows="3" placeholder="ที่อยู่ลูกค้า"></textarea>
+                <input type="text" id="clientTaxId" oninput="updatePreview()" placeholder="เลขประจำตัวผู้เสียภาษีลูกค้า">
+            </div>
+            <div class="input-group">
+                <label>ชื่อผู้ลงนาม (ตัวบรรจง)</label>
+                <input type="text" id="customerName" oninput="updatePreview()" placeholder="ชื่อผู้รับสินค้า (ในวงเล็บ)">
+                <input type="text" id="custSigDate" oninput="updatePreview()" placeholder="วันที่ฝั่งผู้รับ (เช่น 28/04/2026)">
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 5px 0;">
+                <input type="text" id="authorizedName" oninput="updatePreview()" placeholder="ชื่อผู้มีอำนาจลงนาม (ในวงเล็บ)">
+                <input type="text" id="authSigDate" oninput="updatePreview()" placeholder="วันที่ฝั่งผู้ออก (เช่น 28/04/2026)">
+            </div>
+            <div class="input-group">
+                <label>รายละเอียดเอกสาร</label>
+                <input type="text" id="docNo" oninput="updatePreview()" placeholder="เลขที่เอกสาร (เช่น INV-2026-001)">
+                <input type="date" id="docDate" oninput="updatePreview()">
+                <select id="docCopy" onchange="updatePreview()">
+                    <option value="ต้นฉบับ (Original)">ต้นฉบับ (Original)</option>
+                    <option value="สำเนา (Copy)">สำเนา (Copy)</option>
+                </select>
+                <div style="display: flex; gap: 15px; margin-top: 10px;">
+                    <label><input type="checkbox" id="useVat" onchange="updatePreview()" checked> ภาษี VAT 7%</label>
+                    <label><input type="checkbox" id="useWht" onchange="updatePreview()"> หัก ณ ที่จ่าย 3%</label>
+                </div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+        
+        <div id="itemsControl">
+            <label style="display: block; margin-bottom: 10px;">รายการสินค้า / บริการ</label>
+            <div id="itemsInputs"></div>
+            <button class="btn-action btn-add" style="margin-top: 15px;" onclick="addItem()">+ เพิ่มรายการสินค้า</button>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+            <button class="btn-action btn-reset" onclick="resetData()">ล้างข้อมูลทั้งหมด</button>
+            <button class="btn-action btn-print" onclick="window.print()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                พิมพ์เป็น PDF (A4)
+            </button>
+        </div>
+    </div>
+
+    <div class="paper-container">
+        <div class="paper" id="printArea">
+            <div class="doc-header">
+                <div>
+                    <h2 id="view-sellerName" class="company-logo-text">COMPANY NAME</h2>
+                    <p id="view-sellerAddr" style="font-size: 13px; max-width: 400px; margin-top: 8px;">Address detail goes here...</p>
+                    <p style="font-size: 13px; font-weight: bold;">เลขประจำตัวผู้เสียภาษี: <span id="view-sellerTaxId">-</span></p>
+                </div>
+                <div class="doc-title-box">
+                    <h1 id="view-docTitle">ใบกำกับภาษี</h1>
+                    <p id="view-docTitleEn">TAX INVOICE</p>
+                    <span class="badge-copy" id="view-docCopy">ต้นฉบับ (Original)</span>
+                    <div style="margin-top: 20px; font-size: 14px; text-align: right;">
+                        <p><b>เลขที่ / No.</b> <span id="view-docNo">INV-2026-0001</span></p>
+                        <p><b>วันที่ / Date</b> <span id="view-docDate">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-box">
+                    <h3>ชื่อและที่อยู่ลูกค้า / Customer Details</h3>
+                    <p><b id="view-clientName" style="font-size: 15px;">Customer Name</b></p>
+                    <p id="view-clientAddr">Customer Address detail...</p>
+                    <p><b>เลขประจำตัวผู้เสียภาษี:</b> <span id="view-clientTaxId">-</span></p>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-center" style="width: 40px;">#</th>
+                        <th>รายการ / Description</th>
+                        <th class="col-right" style="width: 80px;">จำนวน</th>
+                        <th class="col-right" style="width: 120px;">ราคาต่อหน่วย</th>
+                        <th class="col-right" style="width: 120px;">จำนวนเงิน</th>
+                    </tr>
+                </thead>
+                <tbody id="view-items">
+                    </tbody>
+            </table>
+
+            <div class="summary-container">
+                <div>
+                    <div id="paidBadge" class="paid-stamp" style="display:none;">PAID</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span>รวมเป็นเงิน (Subtotal)</span>
+                        <span id="res-subtotal">0.00</span>
+                    </div>
+                    <div class="summary-row" id="res-row-vat">
+                        <span>ภาษีมูลค่าเพิ่ม (VAT 7%)</span>
+                        <span id="res-vat">0.00</span>
+                    </div>
+                    <div class="summary-row" id="res-row-wht" style="color: #ef4444;">
+                        <span>หัก ณ ที่จ่าย (WHT 3%)</span>
+                        <span id="res-wht">0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span id="total-label">ยอดชำระสุทธิ</span>
+                        <span id="res-total">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="signature-grid">
+                <div class="sig-box">
+                    <div class="sig-line" onclick="openSigModal('customer')">
+                        <img id="sig-customer-img" src="" style="display:none;">
+                    </div>
+                    <p style="font-size: 13px;">( <span id="view-customerName">........................................</span> )</p>
+                    <p style="font-size: 13px;">ผู้รับสินค้า / บริการ</p>
+                    <p style="font-size: 13px;">วันที่ <span id="view-custSigDate">......../......../........</span></p>
+                </div>
+                <div class="sig-box">
+                    <div class="sig-line" onclick="openSigModal('seller')">
+                        <img id="sig-seller-img" src="" style="display:none;">
+                    </div>
+                    <p style="font-size: 13px;">( <span id="view-authorizedName">........................................</span> )</p>
+                    <p style="font-size: 13px;">ผู้มีอำนาจลงนาม / Authorized Signature</p>
+                    <p style="font-size: 13px; margin-top: 5px;">ในนาม <span class="view-seller-name-small">บริษัทของคุณ</span></p>
+                    <p style="font-size: 13px;">วันที่ <span id="view-authSigDate">......../......../........</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sigModal" class="modal">
+        <div class="modal-content">
+            <h3>ลงลายเซ็น</h3>
+            <canvas id="sigCanvas" width="450" height="200"></canvas>
+            <div style="margin-top: 15px;">
+                <button class="btn-action" style="background:#64748b; color:white;" onclick="closeSigModal()">ยกเลิก</button>
+                <button class="btn-action btn-reset" onclick="clearSig()">ล้าง</button>
+                <button class="btn-action btn-print" onclick="saveSig()">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let docType = 'TAX';
+        let items = [{ desc: 'ค่าบริการที่ปรึกษาการตลาด', qty: 1, price: 10000 }];
+        let activeSig = '';
+
+        // Initialize
+        window.onload = () => {
+            const saved = localStorage.getItem('accounting_v1');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.keys(data.form).forEach(id => {
+                    if(document.getElementById(id)) document.getElementById(id).value = data.form[id];
+                });
+                items = data.items || items;
+                docType = data.docType || 'TAX';
+            }
+            if(!document.getElementById('docDate').value) {
+                document.getElementById('docDate').value = new Date().toISOString().split('T')[0];
+            }
+            switchDoc(docType);
+            renderItemInputs();
+            updatePreview();
+        };
+
+        function switchDoc(type) {
+            docType = type;
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.toggle('active', (type === 'TAX' && b.innerText.includes('กำกับ')) || (type === 'RECEIPT' && b.innerText.includes('เสร็จ')));
+            });
+            
+            const title = document.getElementById('view-docTitle');
+            const titleEn = document.getElementById('view-docTitleEn');
+            const paidBadge = document.getElementById('paidBadge');
+            const totalLabel = document.getElementById('total-label');
+
+            if (type === 'TAX') {
+                title.innerText = 'ใบกำกับภาษี / ใบส่งสินค้า';
+                titleEn.innerText = 'TAX INVOICE / DELIVERY ORDER';
+                paidBadge.style.display = 'none';
+                totalLabel.innerText = 'รวมเงินสุทธิ (Grand Total)';
+            } else {
+                title.innerText = 'ใบเสร็จรับเงิน';
+                titleEn.innerText = 'RECEIPT';
+                paidBadge.style.display = 'block';
+                totalLabel.innerText = 'ยอดเงินที่ได้รับ (Net Received)';
+            }
+            updatePreview();
+        }
+
+        function addItem() {
+            items.push({ desc: '', qty: 1, price: 0 });
+            renderItemInputs();
+            updatePreview();
+        }
+
+        function removeItem(i) {
+            items.splice(i, 1);
+            renderItemInputs();
+            updatePreview();
+        }
+
+        function renderItemInputs() {
+            const container = document.getElementById('itemsInputs');
+            container.innerHTML = '';
+            items.forEach((item, i) => {
+                const div = document.createElement('div');
+                div.style = "display: grid; grid-template-columns: 2fr 0.5fr 1fr 40px; gap: 10px; margin-bottom: 8px;";
+                div.innerHTML = `
+                    <input type="text" value="${item.desc}" oninput="items[${i}].desc=this.value; updatePreview()" placeholder="ชื่อรายการ">
+                    <input type="number" value="${item.qty}" oninput="items[${i}].qty=this.value; updatePreview()" placeholder="จำนวน">
+                    <input type="number" value="${item.price}" oninput="items[${i}].price=this.value; updatePreview()" placeholder="ราคา/หน่วย">
+                    <button onclick="removeItem(${i})" style="border:none; background:#fee2e2; color:#ef4444; border-radius:5px; cursor:pointer;">×</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updatePreview() {
+            const fields = ['sellerName', 'sellerAddr', 'sellerTaxId', 'clientName', 'clientAddr', 'clientTaxId', 'docNo', 'docCopy', 'customerName', 'authorizedName', 'custSigDate', 'authSigDate'];
+            fields.forEach(f => {
+                const val = document.getElementById(f).value;
+                let displayVal = val;
+                
+                // Fallback for names and dates to show dotted lines
+                if (!val && (f === 'customerName' || f === 'authorizedName')) {
+                    displayVal = '........................................';
+                } else if (!val && (f === 'custSigDate' || f === 'authSigDate')) {
+                    displayVal = '......../......../........';
+                } else if (!val) {
+                    displayVal = '-';
+                }
+
+                document.getElementById('view-' + f).innerText = displayVal;
+                if(f === 'sellerName') document.querySelectorAll('.view-seller-name-small').forEach(el => el.innerText = val || 'บริษัทของคุณ');
+            });
+
+            // Date Thai Format (Main Document Date)
+            const d = new Date(document.getElementById('docDate').value);
+            document.getElementById('view-docDate').innerText = d.toLocaleDateString('th-TH', { day:'2-digit', month:'2-digit', year:'numeric'});
+
+            // Table
+            const tbody = document.getElementById('view-items');
+            tbody.innerHTML = '';
+            let subtotal = 0;
+            items.forEach((item, i) => {
+                const lineTotal = (item.qty || 0) * (item.price || 0);
+                subtotal += lineTotal;
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="col-center">${i+1}</td>
+                        <td>${item.desc || '-'}</td>
+                        <td class="col-right">${Number(item.qty).toLocaleString()}</td>
+                        <td class="col-right">${Number(item.price).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td class="col-right">${lineTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            });
+
+            // Calculations
+            const useVat = document.getElementById('useVat').checked;
+            const useWht = document.getElementById('useWht').checked;
+            const vat = useVat ? subtotal * 0.07 : 0;
+            const wht = useWht ? subtotal * 0.03 : 0;
+            const total = subtotal + vat - wht;
+
+            document.getElementById('res-subtotal').innerText = subtotal.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('res-vat').innerText = vat.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('res-wht').innerText = wht.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('res-total').innerText = total.toLocaleString(undefined, {minimumFractionDigits: 2});
+            
+            document.getElementById('res-row-vat').style.display = useVat ? 'flex' : 'none';
+            document.getElementById('res-row-wht').style.display = useWht ? 'flex' : 'none';
+
+            saveToLocal();
+        }
+
+        function saveToLocal() {
+            const formData = {};
+            ['sellerName', 'sellerAddr', 'sellerTaxId', 'clientName', 'clientAddr', 'clientTaxId', 'docNo', 'docDate', 'docCopy', 'customerName', 'authorizedName', 'custSigDate', 'authSigDate'].forEach(id => {
+                formData[id] = document.getElementById(id).value;
+            });
+            localStorage.setItem('accounting_v1', JSON.stringify({ form: formData, items, docType }));
+        }
+
+        function resetData() {
+            if(confirm('ต้องการล้างข้อมูลทั้งหมดหรือไม่?')) {
+                localStorage.removeItem('accounting_v1');
+                location.reload();
+            }
+        }
+
+        // --- Canvas Signature Logic ---
+        const canvas = document.getElementById('sigCanvas');
+        const ctx = canvas.getContext('2d');
+        let writing = false;
+
+        function openSigModal(type) {
+            activeSig = type;
+            document.getElementById('sigModal').style.display = 'flex';
+            clearSig();
+        }
+        function closeSigModal() { document.getElementById('sigModal').style.display = 'none'; }
+        function clearSig() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+        
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', end);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e.touches[0]); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e.touches[0]); });
+        canvas.addEventListener('touchend', end);
+
+        function start(e) { 
+            writing = true; ctx.beginPath(); 
+            ctx.moveTo(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top);
+        }
+        function move(e) {
+            if(!writing) return;
+            ctx.lineTo(e.clientX - canvas.getBoundingClientRect().left, e.clientY - canvas.getBoundingClientRect().top);
+            ctx.stroke();
+        }
+        function end() { writing = false; }
+
+        function saveSig() {
+            const dataUrl = canvas.toDataURL();
+            const img = document.getElementById(`sig-${activeSig}-img`);
+            img.src = dataUrl;
+            img.style.display = 'block';
+            closeSigModal();
+        }
+    </script>
+</body>
+</html>
